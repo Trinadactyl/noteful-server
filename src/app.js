@@ -5,8 +5,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 const { NODE_ENV } = require('./config');
-const foldersRouter = require('./routers/folders-router');
-const notesRouter = require('./routers/notes-router');
+const foldersRouter = require('./folders/folders-router');
+const notesRouter = require('./notes/notes-router');
 
 const app = express();
 const morganOption = (NODE_ENV === 'production')
