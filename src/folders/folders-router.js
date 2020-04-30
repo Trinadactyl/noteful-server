@@ -1,24 +1,22 @@
 const express = require('express');
 const xss = require('xss');
+const FoldersService = require('./folders-service');
+//const uuid = require('uuid');
 
 const foldersRouter = express.Router();
-const FoldersService = require('./folders-service');
+const jsonBodyParser = express.json()
 
-// middleware setup
-foldersRouter.use(express.json());
-
+//foldersRouter.use(express.json());
 
 // sanitizing folder data before it goes out
-const sanitizeFolder = folder => {
-  return {
+const sanitizeFolder = folder => ({
     id: folder.id,
     name: xss(folder.name)
-  };
-};
+});
 
-
-// read records
-foldersRouter.get('/', (req, res, next) => {
+foldersRouter
+  .route('/')
+  .get((req, res, next) => {
   const db = req.app.get('db');
 
   FoldersService.getFolders(db)
