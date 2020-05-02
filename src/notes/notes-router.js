@@ -25,7 +25,7 @@ notesRouter
       .catch(next)
   })
   .post(jsonBodyParser, (req, res, next) => {
-    const { name, content,folder_id } = req.body
+    const { name, content, folder_id } = req.body
     const newNote = { name, content, folder_id }
     const db = req.app.get('db')
 
@@ -34,6 +34,8 @@ notesRouter
       return res.status(400).json({
         error: { Message: `Missing '${key}' in request body` }
       })
+
+      console.log('newNote', newNote)
     
     NotesService.insertNote(db, newNote)
       .then(note => {
@@ -41,7 +43,10 @@ notesRouter
           .status(201)
           .json(sanitizeNote(note))
       })
-      .catch(next)
+      .catch((error) => {
+        console.log(error)
+        next(error)
+      })
   })
 
   notesRouter
