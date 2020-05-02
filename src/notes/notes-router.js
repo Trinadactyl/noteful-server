@@ -1,99 +1,97 @@
 const express = require('express');
 const xss = require('xss');
-const uuid = require('uuid');
+//const uuid = require('uuid');
+const NotesService = require('./notesService');
 
 const notesRouter = express.Router();
-const NotesService = require('../services/app-service')('notes');
+jsonBodyParser = express.json();
 
-// middleware setup
-notesRouter.use(express.json());
-
-
-// sanitizing note data before it goes out
-const sanitizeNote = note => {
-  return {
+const sanitizeNote = note => ({
     id: note.id,
     name: xss(note.name),
     content: xss(note.content),
     folder_id: note.folder_id,
     modified: note.modified
-  };
-};
-
-
-// create record
-notesRouter.post('/', (req, res, next) => {
-  const db = req.app.get('db');
-
-  const requiredFields = ['name', 'content', 'folder_id'];
-  for (let field of requiredFields) {
-    if (!req.body[field]) {
-      return res
-        .status(400)
-        .send(`'${field}' is required`);
-    }
-  }
-
-  const id = uuid.v4();
-  const { name, content, folder_id, modified } = req.body;
-  const note = { id, name, content, folder_id };
-  if (modified) note.modified = modified;
-
-  NotesService.addItem(db, note)
-    .then(note => {
-      return res.status(201).json(sanitizeNote(note));
-    })
-    .catch(next);
 });
 
+notesRouter
+  .route('/')
+  .get((req, res, next) => {
+    const db = req.app.get('db')
+    NotesService.getAllNotes(db)
+      .then(notes => {
+        res.json(notes.map(sanitizeNote))
+      })
+      .catch(next)
+  })
+  .post(jsonBodyParser, (req, res, next) => {
+    const { name, content,folder_id } = req.body
+    const newNote = { name, content, folder_id }
+    const db = req.app.get('db')
 
-// read records
-notesRouter.get('/', (req, res, next) => {
-  const db = req.app.get('db');
+    for (const [key, value] of Object.entries(newNote))
+      if (value === null)
+      return res.status(400).json({
+        error: { Message: `Missing '${key}' in request body` }
+      })
+    
+    NotesService.insertNote(db, newNote)
+      .then(note => {
+        res
+          .status(201)
+          .json(sanitizeNote(note))
+      })
+      .catch(next)
+  })
 
-  NotesService.getItems(db)
-    .then(notes => {
-      return res.status(200).json(notes.map(sanitizeNote));
-    })
-    .catch(next);
-});
-
-notesRouter.get('/:id', (req, res, next) => {
-  const { id } = req.params;
-  const db = req.app.get('db');
-
-  NotesService.getItemById(db, id)
-    .then(note => {
-      if (note) {
-        return res.status(200).json(sanitizeNote(note));
-      } else {
-        return res.status(404).send('Note not found');
-      }
-      
-    })
-    .catch(next);
-});
-
-
-// delete record
-notesRouter.delete('/:id', (req, res, next) => {
-  const { id } = req.params;
-  const db = req.app.get('db');
-
-  NotesService.getItemById(db, id)
-    .then(note => {
-      if (!note) {
-        return res.status(404).send('Note not found');
-      }
-
-      NotesService.deleteItem(db, id)
-        .then(() => {
-          return res.status(204).end();
+  notesRouter
+    .route('/:id')
+    .all((req, res, next) => {
+      const db = req.app.get('db')
+      NotesService.getById(db, req.params.id)
+        then(note => {
+          if (!note) {
+            return res.status(404).json({
+              error: { message: `Note doesn't exist` }
+            })
+          }
+          res.note = note
         })
-        .catch(next);
-    });
+        .catch(next)
+    })
+    .get((res, req, next) => {
+      res.json(sanitizeNote(note))
+    })
+    .delete((req, res, next) => {
+      const db = req.app.get('db')
+      NotesService.deleteNote(db, req.params.id)
+        .then(() => {
+          res.status(204).end()
+        })
+        .catch(next)
+    })
+    .patch(jsonBodyParser, (req, res, next) => {
+      const { name } = req.body
+      const noteToUpdate = { name }
 
-});
+      const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length
+      if (numberOfValues === 0) {
+        return res.status(400).json({ 
+          error: { Message: `Request body must contain a 'name'` }
+        })
+      }
+      const db = req.app.get('db')
+      NotesService.updateNote(
+        db,
+        req.params.id,
+        noteToUpdate
+      )
+      .then(numRowsAffected => {
+        res.status(204).end()
+      })
+      .catch(next)
+    })
+
 
 
 module.exports = notesRouter;
