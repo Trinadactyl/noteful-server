@@ -1,6 +1,6 @@
 const NotesService = {
   getAllNotes(db) {
-    return db.selece('*').from(notes)
+    return db.select('*').from('notes')
   },
 
   insertNote(db, newNote) {
