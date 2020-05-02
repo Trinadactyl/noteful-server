@@ -9,12 +9,11 @@ const foldersRouter = require('./folders/folders-router');
 const notesRouter = require('./notes/notes-router');
 
 const app = express();
+
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
   : 'common';
 
-
-// set up middleware
 app.use(morgan(morganOption));
 app.use(helmet());
 app.use(cors());
@@ -22,7 +21,7 @@ app.use(cors());
 app.use('/folders', foldersRouter);
 app.use('/notes', notesRouter);
 
-// request handling
+
 app.get('/', (req, res) => {
   res.status(200).send('Hello, world!');
 });
