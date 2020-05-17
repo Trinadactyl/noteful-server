@@ -29,8 +29,9 @@ foldersRouter
   const { name } = req.body 
   const newFolder = { name }
 
-  console.log('req.body:', req.body)  //name: Folder 1
-  console.log('newFolder', newFolder) //folder_name: undefined
+  // console.log('req.body:', req.body)  
+  // console.log('newFolder', newFolder) 
+  
   for (const [key, value] of Object.entries(newFolder))
     if (value == null)
       return res.status(400).json({

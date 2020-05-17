@@ -1,6 +1,6 @@
 const express = require('express');
 const xss = require('xss');
-//const uuid = require('uuid');
+const uuid = require('uuid');
 const NotesService = require('./notesService');
 
 const notesRouter = express.Router();
@@ -25,9 +25,10 @@ notesRouter
       .catch(next)
   })
   .post(jsonBodyParser, (req, res, next) => {
+    const db = req.app.get('db') 
     const { name, content, folder_id } = req.body
     const newNote = { name, content, folder_id }
-    const db = req.app.get('db')
+    
 
     for (const [key, value] of Object.entries(newNote))
       if (value === null)
@@ -36,10 +37,13 @@ notesRouter
       })
 
       console.log('newNote:', newNote)
+
+        const id = uuid.v4();
+        const note = { id, name, content, folder_id };
     
-    NotesService.insertNote(db, newNote)
+    NotesService.insertNote(db, note)
       .then(note => {
-        res
+        return res
           .status(201)
           .json(sanitizeNote(note))
       })
