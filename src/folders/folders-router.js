@@ -1,12 +1,12 @@
 const express = require('express');
 const xss = require('xss');
 const FoldersService = require('./foldersService');
-//const uuid = require('uuid');
+const uuid = require('uuid');
 
 const foldersRouter = express.Router();
 const jsonBodyParser = express.json()
 
-//foldersRouter.use(express.json());
+foldersRouter.use(express.json());
 
 const sanitizeFolder = folder => ({
     id: folder.id,
@@ -35,16 +35,19 @@ foldersRouter
     if (value == null)
       return res.status(400).json({
         error: { Message: `Missing '${key}' in request body` }
-      })
+      });
 
-  FoldersService.insertFolder(db, newFolder)
+  const id = uuid.v4();
+  const folder = { id, name };
+
+  FoldersService.insertFolder(db, folder)
     .then(folder => {
       res
         .status(201)
         .json(sanitizeFolder(folder));
     })
     .catch((error) => {
-      console.log(error)
+      console.log('the error:', error)
       next(Error)
     });
 });
