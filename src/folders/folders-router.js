@@ -26,9 +26,11 @@ foldersRouter
   })
   .post(jsonBodyParser, (req, res, next) => {
   const db = req.app.get('db');
-  const{ name } = req.body
-  const newFolder = { folder_name }
+  const { name } = req.body 
+  const newFolder = { name }
 
+  console.log('req.body:', req.body)  //name: Folder 1
+  console.log('newFolder', newFolder) //folder_name: undefined
   for (const [key, value] of Object.entries(newFolder))
     if (value == null)
       return res.status(400).json({
@@ -41,11 +43,14 @@ foldersRouter
         .status(201)
         .json(sanitizeFolder(folder));
     })
-    .catch(next);
+    .catch((error) => {
+      console.log(error)
+      next(Error)
+    });
 });
 
 foldersRouter
-  .route('/:folder_id')
+  .route('/:id')
   .all((req, res, next) => {
     const db = req.app.get('db')
     FoldersService.getById(db, req.params.id)

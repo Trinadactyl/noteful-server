@@ -35,7 +35,7 @@ notesRouter
         error: { Message: `Missing '${key}' in request body` }
       })
 
-      console.log('newNote', newNote)
+      console.log('newNote:', newNote)
     
     NotesService.insertNote(db, newNote)
       .then(note => {
