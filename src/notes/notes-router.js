@@ -56,15 +56,17 @@ notesRouter
   notesRouter
     .route('/:id')
     .all((req, res, next) => {
+      console.log('hit note router')
       const db = req.app.get('db')
       NotesService.getById(db, req.params.id)
-        then(note => {
+        .then(note => {
           if (!note) {
             return res.status(404).json({
               error: { message: `Note doesn't exist` }
             })
           }
           res.note = note
+          next()
         })
         .catch(next)
     })
@@ -72,13 +74,19 @@ notesRouter
       res.json(sanitizeNote(note))
     })
     .delete((req, res, next) => {
+      console.log('delete router')
       const db = req.app.get('db')
+
       NotesService.deleteNote(db, req.params.id)
         .then(() => {
           res.status(204).end()
         })
-        .catch(next)
-    })
+        .catch((error) => {
+          console.log('error:', error)
+          next(error)
+        })
+      })
+     
     .patch(jsonBodyParser, (req, res, next) => {
       const { name } = req.body
       const noteToUpdate = { name }

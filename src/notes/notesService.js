@@ -22,7 +22,8 @@ const NotesService = {
   },
 
   deleteNote(db, id) {
-    return db('notes')
+    return db
+      .from('notes')
       .where({ id })
       .delete()
   },
